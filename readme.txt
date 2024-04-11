@@ -51,3 +51,5 @@ Ensure the base station is operational and its network settings are correctly co
 - This system is designed for extensibility, allowing for easy customization of commands and control panel buttons to fit a wide range of use cases.
 - The application and server must only be used for ethical purposes. Ensure you have the necessary permissions before triggering any actions on the base station.
 - For support, customization help, or to report issues, please contact the developer.
+
+*Made with help from Jetbrains AI assistant, gpt4, a few years of experience, and a TON of patience
