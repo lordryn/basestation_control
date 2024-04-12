@@ -41,9 +41,10 @@ pip install kivy kivymd socket
 2. Start the server by running `main.py` on the base station.
 
 ### Setting Up the Control Panel
-1. On the client device, run `controlpanel.py` to launch the control panel application.
-2. Use the application to add buttons and configure them to trigger commands on the base station. Ensure the base station's IP address and port are correctly configured in the control panel application to facilitate communication.
 
+1. Ensure the ip adress in the controlpanel.py script is set to the base station's ip and the port matches the one set in main.py
+2. On the client device, run `controlpanel.py` to launch the control panel application.
+3. Use the application to add buttons and configure them to trigger commands on the base station.
 Ensure the base station is operational and its network settings are correctly configured to allow for seamless communication with the control panel application.
 
 ## Additional Notes
