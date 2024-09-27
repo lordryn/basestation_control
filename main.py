@@ -4,9 +4,9 @@ from tkinter import ttk, simpledialog, messagebox
 import json
 import pyautogui
 import socket
+import subprocess
 
-
-print(pyautogui.KEYBOARD_KEYS)
+# print(pyautogui.KEYBOARD_KEYS)
 
 
 class KeySelectionDialog(tk.Toplevel):
@@ -36,6 +36,8 @@ class KeySelectionDialog(tk.Toplevel):
         self.current_keys = current_keys
         self.key_options = ['none'] + list(pyautogui.KEYBOARD_KEYS)
         self.variables = [tk.StringVar(self) for _ in range(3)]
+        self.script_var = tk.StringVar(self)
+        self.script_var.set(self.master.mappings[self.button_id].get('script', ''))
 
 
         for i, var in enumerate(self.variables):
@@ -46,16 +48,39 @@ class KeySelectionDialog(tk.Toplevel):
 
         save_button = tk.Button(self, text="Save", command=self.save)
         save_button.grid(row=4, column=1)
+
+        tk.Label(self, text='Script:').grid(row=3, column=0)
+        script_entry = ttk.Entry(self, textvariable=self.script_var)
+        script_entry.grid(row=3, column=1)
+
         self.transient(parent)  # Set to be on top of the main window
         self.grab_set()  # Take over input focus
 
     def save(self):
-        # Update the keys in the main application's mappings
+        # Retrieve selected keys from the dropdown menus
         keys = [var.get() for var in self.variables]
-        self.master.mappings[self.button_id]['keys'] = keys
+
+        # Retrieve the script path from the entry field
+        script = self.script_var.get()  # Ensure script_var is defined in __init__
+
+        # If the button ID already exists, preserve the name (if any)
+        mapping_name = self.master.mappings.get(self.button_id, {}).get('name', 'Unnamed')
+
+        # Update the mappings for the current button_id with both keys and the script
+        self.master.mappings[self.button_id] = {
+            'name': mapping_name,  # Preserve or set default name
+            'keys': keys,  # Save selected keys
+            'script': script  # Save script path
+        }
+
+        # Save the updated mappings to the mappings.json file
         self.master.save_mappings()
+
+        # Refresh the UI to reflect the new changes
         self.master.refresh_ui()
-        self.destroy()  # Close the dialog
+
+        # Close the dialog window
+        self.destroy()
 
 
 class BaseStationApp(tk.Tk):
@@ -125,24 +150,40 @@ class BaseStationApp(tk.Tk):
     def refresh_ui(self):
         self.mappings_listbox.delete(0, tk.END)
         for button_id, mapping_info in self.mappings.items():
-            self.mappings_listbox.insert(tk.END, f"{mapping_info['name']} - {button_id}")
+            display_text = f"{mapping_info['name']} - {button_id} - Script: {mapping_info.get('script', 'None')}"
+            self.mappings_listbox.insert(tk.END, display_text)
 
     def add_mapping(self):
         # Code to add new mapping
         pass
 
     def emulate_key_press(self, button_id):
-        # Confirming button ID and keys
         print(f"Emulating key press for button ID: {button_id}")
-        keys = self.mappings[button_id]['keys']
-        print(f"Keys to press: {keys}")  # Log keys to press
+
+        # Retrieve the keys from the mapping
+        keys = self.mappings[button_id].get('keys', [])
+
+        # Filter out "none" keys
+        valid_keys = [key for key in keys if key != "none"]
+
+        # Emulate key press
         try:
-            if len(keys) == 1:
-                pyautogui.press(keys[0])
-            elif len(keys) > 1:
-                pyautogui.hotkey(*keys)
+            if len(valid_keys) == 1:
+                pyautogui.press(valid_keys[0])
+            elif len(valid_keys) > 1:
+                pyautogui.hotkey(*valid_keys)
         except Exception as e:
-            print(f"Error during key press emulation: {e}")  # Log any errors
+            print(f"Error during key press emulation: {e}")
+
+        # Run the associated script if one is present
+        script = self.mappings[button_id].get('script', None)
+
+        if script:
+            try:
+                subprocess.run(['python', script], check=True)
+                print(f"Successfully ran script: {script}")
+            except subprocess.CalledProcessError as e:
+                print(f"Error running script: {e}")
 
     def edit_mapping(self, event):
         # This function is bound to the listbox item double-click event
